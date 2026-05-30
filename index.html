@@ -1,0 +1,587 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
+<script>
+(function(){
+  var VER = '20260530';
+  var url  = window.location.href;
+  var hash = window.location.hash;
+  var base = url.split('?')[0].split('#')[0];
+  if (url.indexOf('?v=' + VER) === -1) {
+    window.location.replace(base + '?v=' + VER + (hash || ''));
+  }
+})();
+</script>
+<title>정석비행훈련원 입과자 통합관리 플랫폼 v1</title>
+<link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.css?v=20260530" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.js?v=20260530"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js?v=20260530"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js?v=20260530"></script>
+<script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js?v=20260530"></script>
+<style>
+:root{--primary:#1e40af;--primary-d:#1e3a5f;--primary-l:#3b82f6;--accent:#0ea5e9;--success:#10b981;--warning:#f59e0b;--danger:#ef4444;--purple:#8b5cf6;--bg:#f0f4f8;--card:#fff;--border:#e2e8f0;--text:#1e293b;--muted:#64748b;--sb-w:220px}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Malgun Gothic','Apple SD Gothic Neo',sans-serif;background:var(--bg);color:var(--text);display:flex;min-height:100vh;font-size:13px}
+#sidebar{width:var(--sb-w);min-height:100vh;background:linear-gradient(180deg,#0f2544 0%,#1e3a5f 50%,#1e40af 100%);color:#fff;display:flex;flex-direction:column;position:fixed;top:0;left:0;z-index:200;transition:width .28s;box-shadow:3px 0 12px rgba(0,0,0,.25)}
+#sidebar.collapsed{width:60px}
+.sb-logo{padding:18px 16px 12px;border-bottom:1px solid rgba(255,255,255,.12);overflow:hidden;white-space:nowrap}
+.sb-logo .logo-main{font-size:14px;font-weight:800;letter-spacing:.3px;display:flex;align-items:center;gap:8px}
+.sb-logo .logo-sub{font-size:10px;color:rgba(255,255,255,.6);margin-top:3px;padding-left:26px}
+#sidebar.collapsed .logo-sub,#sidebar.collapsed .logo-text{display:none}
+.sb-nav{flex:1;padding:8px 0;overflow-y:auto}
+.nav-item{display:flex;align-items:center;padding:11px 16px;cursor:pointer;transition:background .2s;white-space:nowrap;overflow:hidden;gap:10px;border-left:3px solid transparent}
+.nav-item:hover{background:rgba(255,255,255,.12)}
+.nav-item.active{background:rgba(255,255,255,.18);border-left-color:#60a5fa}
+.nav-item .icon{font-size:17px;min-width:22px;text-align:center}
+.nav-item .label{font-size:13px;font-weight:500}
+#sidebar.collapsed .label{display:none}
+.sb-footer{padding:12px 16px;border-top:1px solid rgba(255,255,255,.12);cursor:pointer;text-align:right;font-size:18px;transition:.2s}
+.sb-footer:hover{background:rgba(255,255,255,.1)}
+.sb-ver{font-size:10px;color:rgba(255,255,255,.4);text-align:center;padding:6px 0;border-top:1px solid rgba(255,255,255,.07)}
+#sidebar.collapsed .sb-ver{display:none}
+#main{margin-left:var(--sb-w);flex:1;padding:20px;transition:margin-left .28s;min-height:100vh}
+#main.expanded{margin-left:60px}
+.page{display:none}.page.active{display:block;animation:fadeIn .2s ease}
+@keyframes fadeIn{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:translateY(0)}}
+.page-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:10px}
+.page-title{font-size:19px;font-weight:800;color:var(--primary-d);display:flex;align-items:center;gap:8px}
+.page-title span{font-size:12px;font-weight:400;color:var(--muted);margin-left:4px}
+.card{background:var(--card);border-radius:10px;box-shadow:0 1px 6px rgba(0,0,0,.08);padding:16px}
+.card-title{font-size:13px;font-weight:700;color:var(--primary-d);margin-bottom:10px;display:flex;align-items:center;gap:6px}
+.kpi-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px;margin-bottom:16px}
+.kpi-card{background:var(--card);border-radius:10px;padding:14px 16px;box-shadow:0 1px 6px rgba(0,0,0,.08);border-left:4px solid var(--primary-l);transition:.2s;cursor:default}
+.kpi-card:hover{transform:translateY(-2px);box-shadow:0 4px 14px rgba(0,0,0,.12)}
+.kpi-val{font-size:28px;font-weight:800;color:var(--primary);line-height:1}
+.kpi-lbl{font-size:11px;color:var(--muted);margin-top:4px}
+.kpi-sub{font-size:10px;color:var(--success);margin-top:2px}
+.toolbar{display:flex;align-items:center;gap:7px;flex-wrap:wrap;margin-bottom:12px}
+.btn{padding:6px 13px;border-radius:6px;border:none;cursor:pointer;font-size:12px;font-weight:600;transition:.18s;display:inline-flex;align-items:center;gap:4px;white-space:nowrap}
+.btn:active{transform:scale(.97)}
+.btn-primary{background:var(--primary);color:#fff}.btn-primary:hover{background:#1d4ed8}
+.btn-success{background:var(--success);color:#fff}.btn-success:hover{background:#059669}
+.btn-warning{background:var(--warning);color:#fff}.btn-warning:hover{background:#d97706}
+.btn-danger{background:var(--danger);color:#fff}.btn-danger:hover{background:#dc2626}
+.btn-gray{background:#94a3b8;color:#fff}.btn-gray:hover{background:#64748b}
+.btn-outline{background:transparent;border:1.5px solid var(--primary);color:var(--primary)}.btn-outline:hover{background:var(--primary);color:#fff}
+.btn-purple{background:var(--purple);color:#fff}.btn-purple:hover{background:#7c3aed}
+.btn-sm{padding:4px 9px;font-size:11px}
+select,input[type=text],input[type=date],input[type=number],textarea{border:1.5px solid var(--border);border-radius:6px;padding:5px 9px;font-size:12px;outline:none;background:#fff;transition:.15s;color:var(--text)}
+select:focus,input:focus,textarea:focus{border-color:var(--primary-l);box-shadow:0 0 0 3px rgba(59,130,246,.12)}
+.tbl-wrap{overflow-x:auto;border-radius:8px;box-shadow:0 1px 6px rgba(0,0,0,.07)}
+table.data-table{width:100%;border-collapse:collapse;font-size:12px}
+table.data-table th{background:var(--primary-d);color:#fff;padding:8px 9px;text-align:center;white-space:nowrap;border:1px solid #2d4e7a;font-weight:600;font-size:11.5px}
+table.data-table td{padding:6px 8px;border:1px solid var(--border);text-align:center;white-space:nowrap;background:#fff}
+table.data-table tr:nth-child(even) td{background:#f8fafc}
+table.data-table tr:hover td{background:#eff6ff!important}
+.subtotal-row td{background:#dbeafe!important;font-weight:700;color:#1e40af}
+.total-row td{background:var(--primary-d)!important;color:#fff!important;font-weight:700}
+.year-cell{background:#eff6ff!important;font-weight:800;color:var(--primary-d)!important;border-right:2px solid var(--primary-l)!important}
+.badge{display:inline-block;padding:2px 8px;border-radius:10px;font-size:11px;font-weight:600}
+.badge-blue{background:#dbeafe;color:#1d4ed8}.badge-green{background:#d1fae5;color:#065f46}
+.badge-yellow{background:#fef3c7;color:#92400e}.badge-red{background:#fee2e2;color:#991b1b}
+.badge-gray{background:#f1f5f9;color:#475569}.badge-purple{background:#ede9fe;color:#5b21b6}
+.badge-orange{background:#ffedd5;color:#9a3412}.badge-teal{background:#ccfbf1;color:#0f766e}
+.true-badge{background:#d1fae5;color:#065f46;padding:2px 9px;border-radius:10px;font-size:11px;font-weight:700}
+.false-badge{background:#fee2e2;color:#991b1b;padding:2px 9px;border-radius:10px;font-size:11px;font-weight:700}
+.tag-btn{display:inline-block;padding:3px 10px;border-radius:12px;font-size:11px;font-weight:600;cursor:pointer;border:1.5px solid transparent;transition:.15s;margin:1px}
+.tag-btn:hover{filter:brightness(.92);transform:scale(1.04)}
+.tag-btn.active{box-shadow:0 0 0 2px #1e40af}
+.tag-gs{background:#dbeafe;color:#1d4ed8;border-color:#93c5fd}
+.tag-ftd{background:#ede9fe;color:#5b21b6;border-color:#c4b5fd}
+.tag-sim{background:#fef3c7;color:#92400e;border-color:#fde68a}
+.tag-fly{background:#d1fae5;color:#065f46;border-color:#6ee7b7}
+.tag-wait{background:#fee2e2;color:#991b1b;border-color:#fca5a5}
+.tag-koc{background:#dbeafe;color:#1d4ed8;border-color:#93c5fd}
+.tag-jeongseok{background:#fef3c7;color:#92400e;border-color:#fde68a}
+.click-cell{cursor:pointer;position:relative}
+.click-cell:hover{background:#bfdbfe!important}
+.click-cell::after{content:'✎';position:absolute;top:2px;right:3px;font-size:9px;color:#94a3b8;opacity:0;transition:.15s}
+.click-cell:hover::after{opacity:1}
+.status-sel{border:none;background:transparent;font-size:11px;font-weight:600;cursor:pointer;border-radius:10px;padding:2px 7px}
+.s-inprog{background:#dbeafe;color:#1d4ed8}.s-done{background:#d1fae5;color:#065f46}.s-drop{background:#fee2e2;color:#991b1b}
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:1000;display:none;align-items:flex-start;justify-content:center;padding:30px 16px;overflow-y:auto}
+.modal-overlay.open{display:flex}
+.modal-box{background:#fff;border-radius:14px;padding:26px;width:90%;max-width:720px;box-shadow:0 12px 40px rgba(0,0,0,.22);position:relative;margin:auto}
+.modal-title{font-size:16px;font-weight:800;color:var(--primary-d);margin-bottom:18px;padding-bottom:12px;border-bottom:2px solid var(--border)}
+.modal-close{position:absolute;top:16px;right:18px;font-size:20px;cursor:pointer;color:var(--muted);background:none;border:none;line-height:1}
+.modal-close:hover{color:var(--danger)}
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:11px}
+.form-group{display:flex;flex-direction:column;gap:4px}
+.form-group label{font-size:11px;font-weight:700;color:var(--muted);letter-spacing:.3px}
+.form-group input,.form-group select,.form-group textarea{width:100%}
+.form-group.full{grid-column:1/-1}
+.modal-footer{display:flex;justify-content:flex-end;gap:8px;margin-top:20px;padding-top:14px;border-top:1px solid var(--border)}
+#toast{position:fixed;bottom:24px;right:24px;background:var(--primary-d);color:#fff;padding:12px 20px;border-radius:9px;font-size:13px;z-index:9999;opacity:0;transform:translateY(10px);transition:.3s;pointer-events:none;box-shadow:0 4px 16px rgba(0,0,0,.25);max-width:320px}
+#toast.show{opacity:1;transform:translateY(0)}
+.sec-hd{font-size:13px;font-weight:700;color:var(--primary-d);margin:16px 0 8px;border-left:4px solid var(--primary-l);padding-left:10px;display:flex;align-items:center;gap:6px}
+.chart-wrap{position:relative;height:280px}
+.chart-wrap-lg{position:relative;height:340px}
+.dash-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px}
+@media(max-width:900px){.dash-grid{grid-template-columns:1fr}}
+.fc{font-size:12px}.fc-toolbar-title{font-size:16px!important;font-weight:700!important}
+.cal-note-list{max-height:300px;overflow-y:auto}
+.cal-note-item{display:flex;align-items:center;gap:8px;padding:7px 10px;border-radius:7px;border:1px solid var(--border);margin-bottom:6px;background:#fff}
+.cal-note-item:hover{background:#eff6ff}
+.stat-input{border:1.5px solid var(--primary-l);border-radius:5px;padding:3px 7px;font-size:12px;width:80px;text-align:center}
+.traffic-red{display:inline-flex;align-items:center;gap:5px;padding:3px 10px;border-radius:12px;background:#fee2e2;color:#991b1b;font-size:11px;font-weight:700}
+.traffic-yellow{display:inline-flex;align-items:center;gap:5px;padding:3px 10px;border-radius:12px;background:#fef3c7;color:#92400e;font-size:11px;font-weight:700}
+.traffic-green{display:inline-flex;align-items:center;gap:5px;padding:3px 10px;border-radius:12px;background:#d1fae5;color:#065f46;font-size:11px;font-weight:700}
+.traffic-dot{width:10px;height:10px;border-radius:50%;display:inline-block}
+.dot-red{background:#ef4444}.dot-yellow{background:#f59e0b}.dot-green{background:#10b981}
+.prog-bar-wrap{background:#e2e8f0;border-radius:10px;height:10px;min-width:80px;overflow:hidden}
+.prog-bar-fill{height:100%;border-radius:10px;transition:width .4s}
+.text-muted{color:var(--muted)}.text-center{text-align:center}
+.mt-2{margin-top:8px}.mt-3{margin-top:12px}.mt-4{margin-top:16px}
+.mb-2{margin-bottom:8px}.mb-3{margin-bottom:12px}.mb-4{margin-bottom:16px}
+.info-bar{background:#eff6ff;border:1px solid #bfdbfe;border-radius:7px;padding:9px 14px;font-size:11.5px;color:#1e40af;margin-bottom:10px}
+.warn-bar{background:#fffbeb;border:1px solid #fde68a;border-radius:7px;padding:9px 14px;font-size:11.5px;color:#92400e;margin-bottom:10px}
+hr.divider{border:none;border-top:1px solid var(--border);margin:14px 0}
+#traineeAuthModal .modal-box{max-width:360px;text-align:center;padding:36px 30px}
+#traineeAuthModal .auth-icon{font-size:52px;margin-bottom:12px;display:block}
+#traineeAuthModal .auth-title{font-size:17px;font-weight:800;color:var(--primary-d);margin-bottom:6px}
+#traineeAuthModal .auth-desc{font-size:12px;color:var(--muted);line-height:1.7;margin-bottom:22px}
+#traineeAuthModal .auth-input{width:100%;font-size:18px;padding:12px 14px;text-align:center;border-radius:9px;border:2px solid var(--border);letter-spacing:6px;outline:none;font-weight:700;color:var(--primary-d);transition:.15s}
+#traineeAuthModal .auth-input:focus{border-color:var(--primary-l);box-shadow:0 0 0 3px rgba(59,130,246,.15)}
+#traineeAuthModal .auth-msg{font-size:12px;color:var(--danger);min-height:20px;margin:8px 0 14px}
+#traineeAuthModal .auth-btn{width:100%;padding:12px;background:var(--primary);color:#fff;border:none;border-radius:9px;font-size:14px;font-weight:700;cursor:pointer;transition:.18s;margin-bottom:8px}
+#traineeAuthModal .auth-btn:hover{background:#1d4ed8}
+#traineeAuthModal .auth-btn:disabled{background:#94a3b8;cursor:not-allowed}
+#traineeAuthModal .auth-cancel{width:100%;padding:10px;background:#f1f5f9;color:var(--muted);border:none;border-radius:9px;font-size:13px;font-weight:600;cursor:pointer;transition:.18s}
+#traineeAuthModal .auth-cancel:hover{background:#e2e8f0}
+#traineeAuthModal .auth-footer{margin-top:18px;font-size:11px;color:#94a3b8;border-top:1px solid var(--border);padding-top:14px;line-height:1.6}
+@media print{
+  #sidebar,.toolbar,.page-header .btn,.modal-overlay,#toast,.no-print{display:none!important}
+  #main{margin-left:0!important;padding:8px!important}
+  body{background:#fff;font-size:11px}
+  .page{display:none!important}.page.active{display:block!important}
+  table.data-table th{background:var(--primary-d)!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  .subtotal-row td{background:#dbeafe!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  .total-row td{background:var(--primary-d)!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  @page{size:A3 landscape;margin:8mm}
+  .tbl-wrap{overflow:visible;box-shadow:none}
+  table.data-table{font-size:10px}
+  table.data-table td,table.data-table th{padding:4px 5px}
+}
+</style>
+</head>
+<body>
+<nav id="sidebar">
+  <div class="sb-logo">
+    <div class="logo-main">✈ <span class="logo-text">입과자 통합관리 플랫폼</span></div>
+    <div class="logo-sub">정석비행훈련원 | v1.0</div>
+  </div>
+  <div class="sb-nav">
+    <div class="nav-item active" onclick="showPage('dashboard')"><span class="icon">🏠</span><span class="label">대시보드</span></div>
+    <div class="nav-item" onclick="showPage('trainee')"><span class="icon">👥</span><span class="label">입과자 목록</span></div>
+    <div class="nav-item" onclick="showPage('schedule')"><span class="icon">📅</span><span class="label">차수별 교육일정</span></div>
+    <div class="nav-item" onclick="showPage('ke')"><span class="icon">✈</span><span class="label">KE 양성현황</span></div>
+    <div class="nav-item" onclick="showPage('yearly')"><span class="icon">📊</span><span class="label">연도별 현황</span></div>
+    <div class="nav-item" onclick="showPage('calendar')"><span class="icon">🗓</span><span class="label">교육 캘린더</span></div>
+    <div class="nav-item" onclick="showPage('analytics')"><span class="icon">📈</span><span class="label">통계분석</span></div>
+  </div>
+  <div class="sb-footer" onclick="toggleSidebar()">◀</div>
+  <div class="sb-ver">정석비행훈련원 교육지원팀 | v1.0</div>
+</nav>
+<main id="main">
+<!-- 대시보드 -->
+<section id="page-dashboard" class="page active">
+  <div class="page-header">
+    <div class="page-title">🏠 정석비행훈련원 입과자 통합관리 플랫폼 <span id="dash-date"></span></div>
+    <button class="btn btn-outline btn-sm no-print" onclick="renderDashboard()">🔄 새로고침</button>
+  </div>
+  <div class="kpi-grid" id="dash-kpi"></div>
+  <div class="dash-grid">
+    <div class="card">
+      <div class="card-title">📅 현재 교육차수 현황
+        <button class="btn btn-primary btn-sm no-print" style="margin-left:auto" onclick="open2026EditModal()">✏ 수정</button>
+      </div>
+      <div id="dash-2026-table"></div>
+    </div>
+    <div class="card">
+      <div class="card-title">📋 차수별 교육진도 현황
+        <button class="btn btn-primary btn-sm no-print" style="margin-left:auto" onclick="openProgressModal()">➕ 추가</button>
+      </div>
+      <div class="tbl-wrap">
+        <table class="data-table">
+          <thead><tr><th>교육차수</th><th>인원</th><th>과정</th><th>요구량</th><th>실시</th><th>진도율</th><th>수료예정일</th><th>수료 DAY</th><th>진행상태</th><th class="no-print">관리</th></tr></thead>
+          <tbody id="progress-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-title">📊 연도별 입교/수료 추이 (최근 10년)</div>
+    <div class="chart-wrap-lg"><canvas id="chart-dash-yearly"></canvas></div>
+  </div>
+</section>
+<!-- 입과자 목록 -->
+<section id="page-trainee" class="page">
+  <div class="page-header">
+    <div class="page-title">👥 입과자 목록 <span style="font-size:11px;background:#d1fae5;color:#065f46;padding:2px 9px;border-radius:8px;font-weight:700;margin-left:4px">🔐 보안구역</span></div>
+    <button class="btn btn-gray btn-sm no-print" onclick="lockTrainee()">🔒 잠금</button>
+  </div>
+  <div class="toolbar no-print">
+    <input type="text" id="tr-search" placeholder="🔍 이름/사번 검색..." style="width:160px" oninput="renderTrainees()">
+    <select id="tr-batch-f" onchange="renderTrainees()"><option value="">전체 차수</option></select>
+    <select id="tr-airline-f" onchange="renderTrainees()"><option value="">전체 항공사</option><option>KE</option><option>OZ</option><option>LJ</option></select>
+    <select id="tr-origin-f" onchange="renderTrainees()"><option value="">전체 경력</option><option>군경력</option><option>민경력</option><option>APP</option><option>AB</option></select>
+    <select id="tr-status-f" onchange="renderTrainees()"><option value="">전체 상태</option><option>교육중</option><option>수료</option><option>퇴교</option></select>
+  </div>
+  <div class="toolbar no-print">
+    <button class="btn btn-primary" onclick="openTrModal()">➕ 추가</button>
+    <label class="btn btn-success" style="cursor:pointer">📤 엑셀업로드<input type="file" id="tr-xls-in" accept=".xlsx,.xls,.csv" style="display:none" onchange="handleTrUpload(event)"></label>
+    <button class="btn btn-outline" onclick="downloadTrTemplate()">⬇ 업로드서식</button>
+    <button class="btn btn-gray" onclick="exportTrCSV()">📥 CSV다운</button>
+    <button class="btn btn-warning" onclick="window.print()">🖨 PDF인쇄</button>
+    <button class="btn btn-danger btn-sm" onclick="resetTrData()" style="margin-left:auto">⚠ 데이터초기화</button>
+  </div>
+  <div class="info-bar" id="tr-stat-bar">⏳ 데이터 불러오는 중...</div>
+  <div class="tbl-wrap">
+    <table class="data-table">
+      <thead><tr><th>NO</th><th>차수</th><th>성명</th><th>사번</th><th>항공사</th><th>경력구분</th><th>성별</th><th>생년월일</th><th>연락처</th><th>이메일</th><th>입사일</th><th>CPL</th><th>IFR</th><th>MEL</th><th>비행시간</th><th>착륙</th><th>CE525</th><th>IFR2</th><th>MEL2</th><th>자격증취득일</th><th>입과일</th><th>수료일</th><th>상태</th><th>비고</th><th class="no-print">관리</th></tr></thead>
+      <tbody id="tr-tbody"></tbody>
+    </table>
+  </div>
+  <div id="tr-paging" class="toolbar mt-2" style="justify-content:center;"></div>
+</section>
+<!-- 차수별 교육일정 -->
+<section id="page-schedule" class="page">
+  <div class="page-header">
+    <div class="page-title">📅 차수별 교육일정</div>
+    <div class="toolbar no-print">
+      <select id="sc-year-f" onchange="renderSchedule()"><option value="">전체 연도</option></select>
+      <input type="text" id="sc-search" placeholder="🔍 차수 검색..." style="width:140px" oninput="renderSchedule()">
+      <button class="btn btn-primary" onclick="openScModal()">➕ 차수추가</button>
+      <label class="btn btn-success" style="cursor:pointer">📤 엑셀업로드<input type="file" id="sc-xls-in" accept=".xlsx,.xls,.csv" style="display:none" onchange="handleScUpload(event)"></label>
+      <button class="btn btn-outline" onclick="downloadScTemplate()">⬇ 업로드서식</button>
+      <button class="btn btn-gray" onclick="exportScCSV()">📥 CSV다운</button>
+      <button class="btn btn-warning" onclick="window.print()">🖨 PDF인쇄</button>
+    </div>
+  </div>
+  <div class="kpi-grid" id="sc-kpi"></div>
+  <div class="info-bar no-print">※ 날짜·교육장소·상태·비고 셀을 <strong>클릭</strong>하면 바로 수정할 수 있습니다.</div>
+  <div class="tbl-wrap">
+    <table class="data-table">
+      <thead>
+        <tr><th rowspan="2">연도</th><th rowspan="2">차수</th><th colspan="3">KE 경력구분</th><th colspan="2">타항공사</th><th rowspan="2">총인원</th><th rowspan="2">입과일</th><th colspan="2">KOC</th><th colspan="2">G/S</th><th colspan="2">SIM</th><th colspan="2">비행</th><th rowspan="2">총교육<br>기간</th><th rowspan="2">교육<br>장소</th><th rowspan="2">상태/비고</th><th rowspan="2" class="no-print">관리</th></tr>
+        <tr><th>군경력</th><th>민경력</th><th>APP</th><th>LJ</th><th>OZ</th><th>시작</th><th>종료</th><th>시작</th><th>종료</th><th>시작</th><th>종료</th><th>시작</th><th>종료</th></tr>
+      </thead>
+      <tbody id="sc-tbody"></tbody>
+    </table>
+  </div>
+</section>
+<!-- KE 양성현황 -->
+<section id="page-ke" class="page">
+  <div class="page-header">
+    <div class="page-title">✈ KE 양성현황</div>
+    <div class="toolbar no-print">
+      <select id="ke-year-f" onchange="renderKE()"><option value="">전체 연도</option></select>
+      <button class="btn btn-primary" onclick="openKEModal()">➕ 추가</button>
+      <button class="btn btn-gray" onclick="exportKECSV()">📥 CSV다운</button>
+      <button class="btn btn-warning" onclick="window.print()">🖨 인쇄</button>
+    </div>
+  </div>
+  <div class="kpi-grid" id="ke-kpi"></div>
+  <div class="tbl-wrap">
+    <table class="data-table">
+      <thead><tr><th>NO</th><th>교육차수</th><th>교육과정</th><th>입과일</th><th>군경력</th><th>민경력</th><th>APP</th><th>LJ</th><th>OZ</th><th>총인원</th><th>교육장소</th><th>비고</th><th class="no-print">관리</th></tr></thead>
+      <tbody id="ke-tbody"></tbody>
+    </table>
+  </div>
+</section>
+<!-- 연도별 현황 -->
+<section id="page-yearly" class="page">
+  <div class="page-header">
+    <div class="page-title">📊 연도별 현황</div>
+    <div class="toolbar no-print">
+      <button class="btn btn-primary" onclick="openKauModal()">➕ 연도추가</button>
+      <label class="btn btn-success" style="cursor:pointer">📤 엑셀업로드<input type="file" id="kau-xls-in" accept=".xlsx,.xls,.csv" style="display:none" onchange="handleKauUpload(event)"></label>
+      <button class="btn btn-outline" onclick="downloadKauTemplate()">⬇ 업로드서식</button>
+      <button class="btn btn-gray" onclick="exportKauCSV()">📥 CSV다운</button>
+      <button class="btn btn-warning" onclick="window.print()">🖨 인쇄</button>
+    </div>
+  </div>
+  <div class="kpi-grid" id="kau-kpi"></div>
+  <div class="tbl-wrap">
+    <table class="data-table">
+      <thead>
+        <tr><th rowspan="2">연도</th><th colspan="6">입교 인원</th><th rowspan="2">입교합계</th><th colspan="6">수료 인원</th><th rowspan="2">수료합계</th><th rowspan="2">퇴교</th><th rowspan="2" class="no-print">관리</th></tr>
+        <tr><th>AB</th><th>군경력</th><th>민경력</th><th>APP</th><th>LJ</th><th>OZ</th><th>AB</th><th>군경력</th><th>민경력</th><th>APP</th><th>LJ</th><th>OZ</th></tr>
+      </thead>
+      <tbody id="kau-tbody"></tbody>
+    </table>
+  </div>
+</section>
+<!-- 교육 캘린더 -->
+<section id="page-calendar" class="page">
+  <div class="page-header">
+    <div class="page-title">🗓 교육 캘린더</div>
+    <div class="toolbar no-print">
+      <select id="cal-year-f" onchange="refreshCalendar()" style="width:100px"></select>
+      <button class="btn btn-primary btn-sm" onclick="openCalNoteModal()">➕ 일정·메모 추가</button>
+      <span style="font-size:11px;color:var(--muted);">
+        <span style="display:inline-block;width:12px;height:12px;background:#1e40af;border-radius:2px;margin-right:3px;"></span>입과
+        <span style="display:inline-block;width:12px;height:12px;background:#f59e0b;border-radius:2px;margin:0 3px 0 10px;"></span>KOC시작
+        <span style="display:inline-block;width:12px;height:12px;background:#10b981;border-radius:2px;margin:0 3px 0 10px;"></span>수료
+        <span style="display:inline-block;width:12px;height:12px;background:#8b5cf6;border-radius:2px;margin:0 3px 0 10px;"></span>행사/메모
+      </span>
+    </div>
+  </div>
+  <div class="card mb-3">
+    <div class="card-title">📝 담당자 등록 일정·메모 목록 <span id="cal-note-count" style="font-size:11px;color:var(--muted);margin-left:8px"></span></div>
+    <div id="cal-note-list-wrap" class="cal-note-list"></div>
+  </div>
+  <div class="card"><div id="calendar"></div></div>
+</section>
+<!-- 통계분석 -->
+<section id="page-analytics" class="page">
+  <div class="page-header">
+    <div class="page-title">📈 통계분석</div>
+    <button class="btn btn-outline btn-sm no-print" onclick="renderAnalytics()">🔄 새로고침</button>
+  </div>
+  <div class="sec-hd">📊 총 인원 현황 (검증)</div>
+  <div class="card mb-4" id="total-stat-wrap"></div>
+  <div class="sec-hd">📅 연도별 입교/수료 현황</div>
+  <div class="card mb-4"><div class="chart-wrap-lg"><canvas id="chart-analytics-yearly"></canvas></div></div>
+  <div class="dash-grid mb-4">
+    <div class="card"><div class="card-title">🍩 출신별 전체 구성</div><div class="chart-wrap"><canvas id="chart-analytics-origin"></canvas></div></div>
+    <div class="card"><div class="card-title">✈ 항공사별 비율</div><div class="chart-wrap"><canvas id="chart-analytics-airline"></canvas></div></div>
+  </div>
+  <div class="sec-hd">📊 연도별 출신별 입과인원 (스택 바)</div>
+  <div class="card mb-4"><div class="chart-wrap-lg"><canvas id="chart-analytics-stack"></canvas></div></div>
+  <div class="sec-hd">📋 2026년도 교육차수·과정·인원 상세</div>
+  <div class="card mb-4" id="analytics-2026-detail"></div>
+  <div class="sec-hd">📈 KAU 연도별 입교 추이 (2003~현재)</div>
+  <div class="card mb-4"><div class="chart-wrap-lg"><canvas id="chart-analytics-trend"></canvas></div></div>
+</section>
+</main>
+<!-- 비밀번호 인증 모달 -->
+<div class="modal-overlay" id="traineeAuthModal">
+  <div class="modal-box">
+    <span class="auth-icon">🔐</span>
+    <div class="auth-title">입과자 목록 접근 제한</div>
+    <div class="auth-desc">훈련생 인적사항 보호를 위해<br><strong style="color:var(--primary-d)">교육지원팀 담당자 전용</strong> 메뉴입니다.<br>접속 비밀번호를 입력해주세요.</div>
+    <input id="trainee-auth-pw" class="auth-input" type="password" placeholder="● ● ● ● ● ●" maxlength="20" onkeydown="if(event.key==='Enter')submitTraineeAuth()">
+    <div id="trainee-auth-msg" class="auth-msg"></div>
+    <button id="trainee-auth-btn" class="auth-btn" onclick="submitTraineeAuth()">🔓 확인</button>
+    <button class="auth-cancel" onclick="cancelTraineeAuth()">취소</button>
+    <div class="auth-footer">⚠ 허가된 교육지원팀 직원만 접속 가능합니다<br>비밀번호 문의: 교육지원팀 담당자</div>
+  </div>
+</div>
+<!-- 입과자 모달 -->
+<div class="modal-overlay" id="trModal">
+  <div class="modal-box">
+    <button class="modal-close" onclick="closeModal('trModal')">✕</button>
+    <div class="modal-title" id="tr-modal-title">👤 입과자 추가</div>
+    <input type="hidden" id="tr-edit-idx" value="-1">
+    <div class="form-grid">
+      <div class="form-group"><label>차수 *</label><input id="tr-batch" placeholder="예: 정석26-3차"></div>
+      <div class="form-group"><label>성명 *</label><input id="tr-name"></div>
+      <div class="form-group"><label>사번</label><input id="tr-empno"></div>
+      <div class="form-group"><label>항공사</label><select id="tr-origin1"><option>KE</option><option>OZ</option><option>LJ</option><option>기타</option></select></div>
+      <div class="form-group"><label>경력구분</label><select id="tr-origin2"><option>군경력</option><option>민경력</option><option>APP</option><option>AB</option><option>기타</option></select></div>
+      <div class="form-group"><label>성별</label><select id="tr-gender"><option>남</option><option>여</option></select></div>
+      <div class="form-group"><label>생년월일</label><input id="tr-birth" type="date"></div>
+      <div class="form-group"><label>연락처</label><input id="tr-tel" placeholder="010-0000-0000"></div>
+      <div class="form-group"><label>이메일</label><input id="tr-email"></div>
+      <div class="form-group"><label>입사일</label><input id="tr-hire" type="date"></div>
+      <div class="form-group"><label>CPL</label><input id="tr-cpl"></div>
+      <div class="form-group"><label>IFR</label><input id="tr-ifr"></div>
+      <div class="form-group"><label>MEL</label><input id="tr-mel"></div>
+      <div class="form-group"><label>비행시간 (h)</label><input id="tr-ttime" type="number" min="0"></div>
+      <div class="form-group"><label>착륙횟수</label><input id="tr-land" type="number" min="0"></div>
+      <div class="form-group"><label>CE525</label><input id="tr-ce525"></div>
+      <div class="form-group"><label>IFR2</label><input id="tr-ifr2"></div>
+      <div class="form-group"><label>MEL2</label><input id="tr-mel2"></div>
+      <div class="form-group"><label>✅ 자격증 취득일</label><input id="tr-licdate" type="date"></div>
+      <div class="form-group"><label>✅ 입과일</label><input id="tr-enterdt" type="date"></div>
+      <div class="form-group"><label>✅ 수료일</label><input id="tr-graddt" type="date"></div>
+      <div class="form-group"><label>상태</label><select id="tr-status2"><option>교육중</option><option>수료</option><option>퇴교</option></select></div>
+      <div class="form-group full"><label>비고</label><textarea id="tr-note" rows="2"></textarea></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-gray" onclick="closeModal('trModal')">취소</button>
+      <button class="btn btn-primary" onclick="saveTrItem()">💾 저장</button>
+    </div>
+  </div>
+</div>
+<!-- 교육일정 모달 -->
+<div class="modal-overlay" id="scModal">
+  <div class="modal-box">
+    <button class="modal-close" onclick="closeModal('scModal')">✕</button>
+    <div class="modal-title" id="sc-modal-title">📅 교육일정 추가</div>
+    <input type="hidden" id="sc-edit-idx" value="-1">
+    <div class="form-grid">
+      <div class="form-group"><label>연도 *</label><input id="sc-year" type="number" placeholder="2026"></div>
+      <div class="form-group"><label>차수 *</label><input id="sc-batch" placeholder="예: 정석26-4차"></div>
+      <div class="form-group"><label>KE 군경력</label><input id="sc-ke-mil" type="number" value="0" oninput="scAutoTotal()"></div>
+      <div class="form-group"><label>KE 민경력</label><input id="sc-ke-civ" type="number" value="0" oninput="scAutoTotal()"></div>
+      <div class="form-group"><label>KE APP</label><input id="sc-ke-app" type="number" value="0" oninput="scAutoTotal()"></div>
+      <div class="form-group"><label>LJ</label><input id="sc-lj" type="number" value="0" oninput="scAutoTotal()"></div>
+      <div class="form-group"><label>OZ</label><input id="sc-oz" type="number" value="0" oninput="scAutoTotal()"></div>
+      <div class="form-group"><label>총인원 (자동)</label><input id="sc-total" type="number" value="0" readonly style="background:#f1f5f9;color:var(--primary);font-weight:700"></div>
+      <div class="form-group"><label>입과일</label><input id="sc-enter" type="date" oninput="scAutoWeeks()"></div>
+      <div class="form-group"><label>수료예정일 (자동)</label><input id="sc-grad" type="date" readonly style="background:#f1f5f9"></div>
+      <div class="form-group"><label>KOC 시작</label><input id="sc-koc-s" type="date"></div>
+      <div class="form-group"><label>KOC 종료</label><input id="sc-koc-e" type="date"></div>
+      <div class="form-group"><label>G/S 시작</label><input id="sc-gs-s" type="date"></div>
+      <div class="form-group"><label>G/S 종료</label><input id="sc-gs-e" type="date"></div>
+      <div class="form-group"><label>SIM 시작</label><input id="sc-sim-s" type="date"></div>
+      <div class="form-group"><label>SIM 종료</label><input id="sc-sim-e" type="date"></div>
+      <div class="form-group"><label>비행 시작</label><input id="sc-fly-s" type="date"></div>
+      <div class="form-group"><label>비행 종료</label><input id="sc-fly-e" type="date" oninput="scAutoWeeks()"></div>
+      <div class="form-group"><label>총교육기간 (주, 자동)</label><input id="sc-weeks" type="number" value="0" readonly style="background:#f1f5f9;color:var(--primary);font-weight:700"></div>
+      <div class="form-group"><label>교육장소</label><select id="sc-place"><option value="">선택</option><option>KOC</option><option>정석</option><option>KOC+정석</option></select></div>
+      <div class="form-group"><label>상태</label><select id="sc-status"><option>교육중</option><option>완료</option><option>예정</option></select></div>
+      <div class="form-group full"><label>비고</label><textarea id="sc-note" rows="2"></textarea></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-gray" onclick="closeModal('scModal')">취소</button>
+      <button class="btn btn-primary" onclick="saveScItem()">💾 저장</button>
+    </div>
+  </div>
+</div>
+<!-- KE 모달 -->
+<div class="modal-overlay" id="keModal">
+  <div class="modal-box">
+    <button class="modal-close" onclick="closeModal('keModal')">✕</button>
+    <div class="modal-title" id="ke-modal-title">✈ KE 양성현황 추가</div>
+    <input type="hidden" id="ke-edit-idx" value="-1">
+    <div class="form-grid">
+      <div class="form-group"><label>교육차수 *</label><input id="ke-batch" placeholder="예: 정석26-3차"></div>
+      <div class="form-group"><label>입과일</label><input id="ke-enter" type="date"></div>
+      <div class="form-group full">
+        <label>교육과정 (복수 선택)</label>
+        <div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:4px" id="ke-course-tags">
+          <span class="tag-btn tag-gs" data-val="G/S" onclick="toggleKeTag(this)">G/S</span>
+          <span class="tag-btn tag-ftd" data-val="FTD" onclick="toggleKeTag(this)">FTD</span>
+          <span class="tag-btn tag-sim" data-val="SIM" onclick="toggleKeTag(this)">SIM</span>
+          <span class="tag-btn tag-fly" data-val="비행" onclick="toggleKeTag(this)">비행</span>
+          <span class="tag-btn tag-wait" data-val="교육대기" onclick="toggleKeTag(this)">교육대기</span>
+        </div>
+        <input type="hidden" id="ke-course">
+      </div>
+      <div class="form-group full">
+        <label>교육장소</label>
+        <div style="display:flex;gap:8px;margin-top:4px" id="ke-place-tags">
+          <span class="tag-btn tag-koc" data-val="KOC" onclick="toggleKePlaceTag(this)">KOC</span>
+          <span class="tag-btn tag-jeongseok" data-val="정석" onclick="toggleKePlaceTag(this)">정석</span>
+        </div>
+        <input type="hidden" id="ke-place">
+      </div>
+      <div class="form-group"><label>군경력</label><input id="ke-mil" type="number" value="0" oninput="keAutoTotal()"></div>
+      <div class="form-group"><label>민경력</label><input id="ke-civ" type="number" value="0" oninput="keAutoTotal()"></div>
+      <div class="form-group"><label>APP</label><input id="ke-app" type="number" value="0" oninput="keAutoTotal()"></div>
+      <div class="form-group"><label>LJ</label><input id="ke-lj" type="number" value="0" oninput="keAutoTotal()"></div>
+      <div class="form-group"><label>OZ</label><input id="ke-oz" type="number" value="0" oninput="keAutoTotal()"></div>
+      <div class="form-group"><label>총입과 (자동)</label><input id="ke-total" type="number" value="0" readonly style="background:#f1f5f9;color:var(--primary);font-weight:700"></div>
+      <div class="form-group full"><label>비고</label><textarea id="ke-note" rows="2"></textarea></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-gray" onclick="closeModal('keModal')">취소</button>
+      <button class="btn btn-primary" onclick="saveKEItem()">💾 저장</button>
+    </div>
+  </div>
+</div>
+<!-- 연도별 모달 -->
+<div class="modal-overlay" id="kauModal">
+  <div class="modal-box">
+    <button class="modal-close" onclick="closeModal('kauModal')">✕</button>
+    <div class="modal-title" id="kau-modal-title">📊 연도별 현황 추가</div>
+    <input type="hidden" id="kau-edit-idx" value="-1">
+    <div class="form-grid">
+      <div class="form-group full"><label>연도 *</label><input id="kau-yr" type="number" placeholder="2026" style="width:120px"></div>
+      <div class="form-group"><label>입교 AB</label><input id="kau-inAb" type="number" value="0"></div>
+      <div class="form-group"><label>입교 군경력</label><input id="kau-inMil" type="number" value="0"></div>
+      <div class="form-group"><label>입교 민경력</label><input id="kau-inCiv" type="number" value="0"></div>
+      <div class="form-group"><label>입교 APP</label><input id="kau-inApp" type="number" value="0"></div>
+      <div class="form-group"><label>입교 LJ</label><input id="kau-inLj" type="number" value="0"></div>
+      <div class="form-group"><label>입교 OZ</label><input id="kau-inOz" type="number" value="0"></div>
+      <div class="form-group"><label>수료 AB</label><input id="kau-grAb" type="number" value="0"></div>
+      <div class="form-group"><label>수료 군경력</label><input id="kau-grMil" type="number" value="0"></div>
+      <div class="form-group"><label>수료 민경력</label><input id="kau-grCiv" type="number" value="0"></div>
+      <div class="form-group"><label>수료 APP</label><input id="kau-grApp" type="number" value="0"></div>
+      <div class="form-group"><label>수료 LJ</label><input id="kau-grLj" type="number" value="0"></div>
+      <div class="form-group"><label>수료 OZ</label><input id="kau-grOz" type="number" value="0"></div>
+      <div class="form-group"><label>퇴교</label><input id="kau-drop" type="number" value="0"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-gray" onclick="closeModal('kauModal')">취소</button>
+      <button class="btn btn-primary" onclick="saveKauItem()">💾 저장</button>
+    </div>
+  </div>
+</div>
+<!-- 셀 수정 모달 -->
+<div class="modal-overlay" id="cellModal">
+  <div class="modal-box" style="max-width:380px">
+    <button class="modal-close" onclick="closeModal('cellModal')">✕</button>
+    <div class="modal-title" id="cell-modal-title">✏ 내용 수정</div>
+    <div class="form-group"><label id="cell-modal-label">값</label><input id="cell-modal-input" style="width:100%;font-size:14px;padding:8px"></div>
+    <div class="modal-footer">
+      <button class="btn btn-gray" onclick="closeModal('cellModal')">취소</button>
+      <button class="btn btn-primary" onclick="saveCellEdit()">💾 저장</button>
+    </div>
+  </div>
+</div>
+<!-- 캘린더 메모 모달 -->
+<div class="modal-overlay" id="calNoteModal">
+  <div class="modal-box" style="max-width:500px">
+    <button class="modal-close" onclick="closeModal('calNoteModal')">✕</button>
+    <div class="modal-title" id="cal-note-modal-title">📝 일정·메모 추가</div>
+    <input type="hidden" id="cal-note-edit-idx" value="-1">
+    <div class="form-grid">
+      <div class="form-group"><label>날짜 *</label><input id="cal-note-date" type="date"></div>
+      <div class="form-group"><label>구분</label><select id="cal-note-type"><option value="입과일">입과일</option><option value="행사">행사</option><option value="특이사항">특이사항</option><option value="공휴일">공휴일</option><option value="기타">기타</option></select></div>
+      <div class="form-group full"><label>내용 *</label><input id="cal-note-content" placeholder="예: 정석26-4차 입과, 창립기념행사 등"></div>
+      <div class="form-group full"><label>메모</label><textarea id="cal-note-memo" rows="3" placeholder="특이사항, 담당자 메모 등"></textarea></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-gray" onclick="closeModal('calNoteModal')">취소</button>
+      <button class="btn btn-primary" onclick="saveCalNote()">💾 저장</button>
+    </div>
+  </div>
+</div>
+<!-- 대시보드 수정 모달 -->
+<div class="modal-overlay" id="dash2026Modal">
+  <div class="modal-box" style="max-width:420px">
+    <button class="modal-close" onclick="closeModal('dash2026Modal')">✕</button>
+    <div class="modal-title">📅 현재 교육차수 현황 수정</div>
+    <div class="info-bar" style="font-size:11px">KE 양성현황 데이터를 기준으로 자동 반영됩니다.</div>
+    <div id="dash-2026-modal-body"></div>
+    <div class="modal-footer">
+      <button class="btn btn-gray" onclick="closeModal('dash2026Modal')">닫기</button>
+      <button class="btn btn-primary" onclick="showPage('ke')">✈ KE 양성현황으로 이동</button>
+    </div>
+  </div>
+</div>
+<!-- 교육진도 모달 -->
+<div class="modal-overlay" id="progressModal">
+  <div class="modal-box" style="max-width:560px">
+    <button class="modal-close" onclick="closeModal('progressModal')">✕</button>
+    <div class="modal-title" id="progress-modal-title">📋 교육진도 추가</div>
+    <input type="hidden" id="prog-edit-idx" value="-1">
+    <div class="form-grid">
+      <div class="form-group"><label>교육차수 *</label><input id="prog-batch" placeholder="예: 정석26-3차"></div>
+      <div class="form-group"><label>교육인원 *</label><input id="prog-ppl" type="number" value="0" min="0"></div>
+      <div class="form-group"><label>교육과정 *</label><select id="prog-course"><option value="FTD">FTD</option><option value="SIM">SIM</option><option value="비행">비행</option><option value="G/S">G/S</option><option value="KOC">KOC</option></select></div>
+      <div class="form-group"><label>교육요구량</label><input id="prog-req" type="number" value="0" min="0"></div>
+      <div class="form-group"><label>실시 횟수</label><input id="prog-done" type="number" value="0" min="0" oninput="autoProgRate()"></div>
+      <div class="form-group"><label>진도율 (자동)</label><input id="prog-rate" type="text" readonly style="background:#f1f5f9;color:var(--primary);font-weight:700"></div>
+      <div class="form-group"><label>수료예정일 *</label><input id="prog-graddt" type="date" oninput="autoProgRate()"></div>
+      <div class="form-group"><label>수료 DAY (자동)</label><input id="prog-day" type="text" readonly style="background:#f1f5f9;color:var(--primary);font-weight:700"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-gray" onclick="closeModal('progressModal')">취소</button>
+      <button class="btn btn-primary" onclick="saveProgressItem()">💾 저장</button>
+    </div>
+  </div>
+</div>
+<div id="toast"></div>
+</body>
+</html>
+
