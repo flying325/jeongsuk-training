@@ -1060,7 +1060,27 @@ function open2026EditModal(){if(!requireAdmin('현재 교육차수 수정'))retu
 /* ════ 입과자 목록 ════ */
 let trPage=1;const TR_PER_PAGE=50;
 function populateTrFilters(){const batches=[...new Set(trData.map(t=>t.batch))].sort();const sel=document.getElementById('tr-batch-f');const cur=sel.value;sel.innerHTML='<option value="">전체 차수</option>'+batches.map(b=>`<option${b===cur?' selected':''}>${b}</option>`).join('');}
-function getFilteredTr(){const q=(document.getElementById('tr-search').value||'').trim().toLowerCase();const batch=document.getElementById('tr-batch-f').value;const airline=document.getElementById('tr-airline-f').value;const origin=document.getElementById('tr-origin-f').value;const status=document.getElementById('tr-status-f').value;return trData.filter(t=>{if(batch&&t.batch!==batch)return false;if(airline&&t.origin1!==airline)return false;if(origin&&t.origin2!==origin)return false;if(status&&t.status!==status)return false;if(q&&!t.name.toLowerCase().includes(q)&&!(t.empno||'').toLowerCase().includes(q))return false;return true;});}
+function getFilteredTr(){
+  const rawQ = (document.getElementById('tr-search').value || '').trim();
+  const q    = rawQ.toLowerCase();
+  const batch   = document.getElementById('tr-batch-f').value;
+  const airline = document.getElementById('tr-airline-f').value;
+  const origin  = document.getElementById('tr-origin-f').value;
+  const status  = document.getElementById('tr-status-f').value;
+  return trData.filter(t => {
+    if (batch   && t.batch   !== batch)   return false;
+    if (airline && t.origin1 !== airline) return false;
+    if (origin  && t.origin2 !== origin)  return false;
+    if (status  && t.status  !== status)  return false;
+    if (q) {
+      const nameMatch  = String(t.name  || '').toLowerCase().includes(q);
+      const empnoMatch = String(t.empno || '').toLowerCase().includes(q);
+      if (!nameMatch && !empnoMatch) return false;
+    }
+    return true;
+  });
+}
+
 function renderTrainees(){
   const filtered=getFilteredTr();const total=filtered.length;const inprog=filtered.filter(t=>t.status==='교육중').length;const done=filtered.filter(t=>t.status==='수료').length;const drop=filtered.filter(t=>t.status==='퇴교').length;const admin=isAdminAuthed();
   document.getElementById('tr-stat-bar').innerHTML=`📋 총 <strong>${total}</strong>명 &nbsp;|&nbsp; 교육중 <strong style="color:#1d4ed8">${inprog}</strong>명 &nbsp;|&nbsp; 수료 <strong style="color:#059669">${done}</strong>명 &nbsp;|&nbsp; 퇴교 <strong style="color:#dc2626">${drop}</strong>명`;
